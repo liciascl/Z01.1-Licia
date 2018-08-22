@@ -1,3 +1,5 @@
 termcolor
 vunit
 vunit_hdl
+requests
+python-firebase
