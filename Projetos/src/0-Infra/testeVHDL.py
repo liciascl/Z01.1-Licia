@@ -17,18 +17,18 @@ import shutil
 from termcolor import colored
 
 # Scripts python
-TOOLSPATH = os.path.dirname(os.path.abspath(__file__))+"/../Z01-tools/"
+TOOLSPATH = os.path.dirname(os.path.abspath(__file__))+"/../../Z01-tools/"
 sys.path.insert(0,TOOLSPATH+"scripts/")
 from testeVHDL import vhdlScript
-from log import logLogiComb
 
-class tstLogiComb(object):
+class tstInfra(object):
 
     def __init__(self):
         self.pwd = os.path.dirname(os.path.abspath(__file__))
+        self.log = 'ingraLog'
         self.rtl = os.path.join(self.pwd,'extras/testeVHDL/rtl/')
         self.tst = os.path.join(self.pwd,'extras/testeVHDL/tst/')
-        self.work = vhdlScript()
+        self.work = vhdlScript(self.log)
 
     def addSrc(self, work):
         work.addSrc(self.rtl)
@@ -40,15 +40,10 @@ class tstLogiComb(object):
         self.addSrc(work)
         self.addTst(work)
 
-    def print(self):
-        logLogiComb("---------- Portas Logicas            ")
-        logLogiComb("---------- 03-Logica-Combinacional   ")
-
 if __name__ == "__main__":
-    tstLogiComb = tstLogiComb()
-    tstLogiComb.print();
-    tstLogiComb.add(tstLogiComb.work)
-    tstLogiComb.work.run()
+    tstInfra = tstInfra()
+    tstInfra.add(tstInfra.work)
+    tstInfra.work.run()
 
 
 
