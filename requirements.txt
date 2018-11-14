@@ -4,3 +4,4 @@ vunit_hdl
 requests
 python-firebase
 pyQt5
+joblib
