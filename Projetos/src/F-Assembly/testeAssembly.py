@@ -1,67 +1,89 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Rafael Corsi @ insper.edu.br
-# Dez/2017
-# Disciplina Elementos de Sistemas
+# Curso de Elementos de Sistemas
+# Desenvolvido por: Rafael Corsi <rafael.corsi@insper.edu.br>
 #
-# script para gerar hack a partir de nasm
-# suporta como entrada um único arquivo
-# ou um diretório
-# Possibilita também a geração do .mif
-##################################################
+# Adaptado de :     Pedro Cunial   <pedrocc4@al.insper.edu.br>
+#                   Luciano Soares <lpsoares@insper.edu.br>
+# Data de criação: 07/2017
 
+######################################################################
+# Tools
+######################################################################
 from os.path import join, dirname
-import sys
-import os
-import shutil
-import subprocess
-import argparse
+import sys, subprocess
 
-# Scripts python
-ROOT_PATH = subprocess.Popen(['git', 'rev-parse', '--show-toplevel'], stdout=subprocess.PIPE).communicate()[0].rstrip().decode('utf-8')
-PROJ_PATH = os.path.join(ROOT_PATH, 'Projetos', 'src')
-TOOLS_PATH = os.path.join(ROOT_PATH, 'Projetos', 'Z01-tools')
-TOOLS_SCRIPT_PATH = os.path.join(TOOLS_PATH, 'scripts')
+ROOT_PATH = subprocess.Popen(
+    ['git', 'rev-parse', '--show-toplevel'],
+    stdout=subprocess.PIPE).communicate()[0].rstrip().decode('utf-8')
+sys.path.insert(0, ROOT_PATH + '/Projetos/Z01-tools/scripts/')
 
-sys.path.insert(0,TOOLS_SCRIPT_PATH)
-
-from assembler import assembler, clearbin
+from config import *
 from testeAssembly import compareRam, compareFromTestDir, clearTestDir
 from simulateCPU import simulateFromTestDir
-from report import report
+from compileALL import compileAll, compileAllNotify
+from assembler import assemblerFromTestDir
+
+def testeAssemblySimulateNotif(error, log):
+    # inicializa notificacao
+    noti = notificacao('Simulacao')
+
+    if not error:
+        noti.ok('\n Bem sucedido')
+        return(0)
+    else:
+        if type(log) == dict:
+            noti.error('\n Falhou: {}'.format(log['name']))
+        else:
+            noti.error('\n Falhou: {}'.format(log[-1]['name']))
+        return(-1)
 
 def testeAssembly(jar, testDir, nasmDir, hackDir, gui, verbose):
-
-    pwd = os.path.dirname(os.path.abspath(__file__))
-
     # global path
     os.path.abspath(nasm)
     os.path.abspath(hack)
 
-    print("==== Assembling Files ==========================")
-    clearbin(hack)
-    errAssembler, logAssembler =  assembler(jar, nasm, hack, True)
+    #cError, cLog = assemblerFromTestDir(jar, nasmDir, hackDir)
 
-    if errAssembler == 0:
-        print("==== Simulating ================================")
+    cError, cLog = assemblerFromTestDir(jar, testDir, nasmDir, hackDir, )
+
+    if cError > 0:
+        compileAllNotify(cError, cLog)
+
+    if cError == 0:
+        print("\n-------------------------")
+        print("- Simulando              ")
+        print("-------------------------")
         clearTestDir(testDir)
-        if simulateFromTestDir(testDir, hackDir, gui, verbose) < 0 :
+        sError, sLog = simulateFromTestDir(testDir, hackDir, gui, verbose)
+        if sError != ERRO_NONE:
+            testeAssemblySimulateNotif(sError, sLog)
             sys.exit(1)
 
         # testAssembling files
-        print("==== Testando ==================================")
-        error, log = compareFromTestDir(testDir)
+        print("\n-------------------------")
+        print("- Testando               ")
+        print("-------------------------")
+        tError, tLog = compareFromTestDir(testDir)
+        if tError:
+            testeAssemblySimulateNotif(tError, tLog)
+        return(tError, tLog)
 
-        if error < -1:
-            sys.exit(1)
+    else:
+        print("\n-------------------------")
+        print("- DICA                   ")
+        print("-------------------------")
+        print(" \n --> OS TESTES SÓ SERÃO EXECUTADOS QUANDO NÃO TIVER MAIS ERROS DE COMPILACÃO \n")
+        print(" Para realizar os testes não podemos ter error de compilacão no assembly.")
+        print(" Verifique o codigo com (erro de compilacao) e o corrija.")
+        print(" Reveja a sintaxe em: https://github.com/insper/z01.1/wiki/AssemblyZ1 \n")
 
-    # report error
-    print("==== Reporting results =========================")
-    r = report(log, 'F')
-    error = r.assemblyTeste(log)
-    r.send()
+        return(cError, cLog)
 
 if __name__ == "__main__":
+    os.system('cls' if os.name == 'nt' else 'clear')
+    print("--======= INICIO ========--")
+
     ap = argparse.ArgumentParser()
     ap.add_argument("-c", "--testDir", help="lista de arquivos a serem testados")
     ap.add_argument("-v", "--verbose", help="log simulacao", action='store_true')
@@ -70,9 +92,9 @@ if __name__ == "__main__":
 
     pwd = os.path.dirname(os.path.abspath(__file__))
     if args["testDir"] is None:
-            testDir = pwd+"/tests/"
+        testDir = pwd+"/tests/"
     else:
-            testDir = args["testDir"]
+        testDir = args["testDir"]
 
     if args["verbose"]:
         verbose = True
@@ -87,6 +109,16 @@ if __name__ == "__main__":
     nasm = pwd+"/src/nasm/"
     hack = pwd+"/bin/hack/"
 
-    jar = TOOLS_PATH+"/jar/Z01-Assembler.jar"
-    testeAssembly(jar=jar, testDir=testDir, nasmDir=nasm, hackDir=hack, gui=gui, verbose=verbose)
+    error, log = testeAssembly(ASSEMBLER_JAR, testDir=testDir, nasmDir=nasm, hackDir=hack, gui=gui, verbose=verbose)
+
+    if error >= 0:
+        print("\n-------------------------")
+        print("- Reportando resultado   ")
+        print("-------------------------")
+        r = report(log, 'F', 'SW')
+        error = r.assemblyTeste(log)
+        r.send()
+
+    print("\n--======== FIM ==========--")
+    sys.exit(error)
 
