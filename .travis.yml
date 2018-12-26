@@ -25,7 +25,7 @@ install:
   
 before_script:
 # garante que o travis pare no primeiro erro
-  - set -e
+#  - set -e
 # dependencias modelsim 
   - sudo dpkg --add-architecture i386
   - sudo apt-get update
