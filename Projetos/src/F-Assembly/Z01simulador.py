@@ -1,35 +1,21 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Rafael Corsi @ insper.edu.br
-# Dez/2017
-# Disciplina Elementos de Sistemas
-#
-# script para gerar hack a partir de nasm
-# suporta como entrada um único arquivo
-# ou um diretório
-# Possibilita também a geração do .mif
-
-import os,sys
-import argparse
-import platform
-
+######################################################################
+# Tools
+######################################################################
 from os.path import join, dirname
-import sys
-import os
-import shutil
-import subprocess
+import sys, subprocess, os
 
+ROOT_PATH = subprocess.Popen(
+    ['git', 'rev-parse', '--show-toplevel'],
+    stdout=subprocess.PIPE).communicate()[0].rstrip().decode('utf-8')
+sys.path.insert(0, ROOT_PATH + '/Projetos/Z01-tools/scripts/')
 
-ROOT_PATH = subprocess.Popen(['git', 'rev-parse', '--show-toplevel'], stdout=subprocess.PIPE).communicate()[0].rstrip().decode('utf-8')
-PROJ_PATH = os.path.join(ROOT_PATH, 'Projetos', 'src')
-TOOLS_PATH = os.path.join(ROOT_PATH, 'Projetos', 'Z01-tools')
-TOOLS_SCRIPT_PATH = os.path.join(TOOLS_PATH, 'scripts')
-
-SIMULATOR = TOOLS_PATH+'/Z01-Simulator-GUI/'
+from config import *
 
 if __name__ == "__main__":
     root = os.getcwd()
-    os.chdir(SIMULATOR)
+    os.chdir(Z01_GUI_PATH)
 
     # tenta detectar a versão do python do sistema
     # se python2 for a padrão, forca a execucao

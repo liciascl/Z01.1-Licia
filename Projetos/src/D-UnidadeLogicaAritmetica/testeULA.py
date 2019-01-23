@@ -7,24 +7,17 @@
 #                   Luciano Soares <lpsoares@insper.edu.br>
 # Data de criação: 07/2017
 
+######################################################################
+# Tools
+######################################################################
 from os.path import join, dirname
-import sys
-import os
-import shutil
-import subprocess
+import sys, subprocess
 
-ROOT_PATH = subprocess.Popen(['git', 'rev-parse', '--show-toplevel'], stdout=subprocess.PIPE).communicate()[0].rstrip().decode('utf-8')
-PROJ_PATH = os.path.join(ROOT_PATH, 'Projetos', 'src')
-TOOL_PATH = os.path.join(ROOT_PATH, 'Projetos', 'Z01-tools')
-TOOL_SCRIPT_PATH = os.path.join(TOOL_PATH, 'scripts')
-PROJ_C_PATH = os.path.join(PROJ_PATH, 'C-LogicaCombinacional')
-
-sys.path.insert(0,TOOL_SCRIPT_PATH)
-sys.path.insert(0,PROJ_C_PATH)
-
-from testeVHDL import vhdlScript
-from testeLogicaCombinacional import tstLogiComb
-from report import report
+ROOT_PATH = subprocess.Popen(
+    ['git', 'rev-parse', '--show-toplevel'],
+    stdout=subprocess.PIPE).communicate()[0].rstrip().decode('utf-8')
+sys.path.insert(0, ROOT_PATH + '/Projetos/Z01-tools/scripts/')
+from config import *
 
 class tstUla(object):
 
@@ -39,15 +32,17 @@ class tstUla(object):
         work.addSrc(self.rtl)
 
     def addTst(self, work):
-        if work.addTstConfigFile(self.tst) is False:
-            sys.exit(1)
-
+        work.addTstConfigFile(self.tst)
 
     def add(self, work):
         self.addSrc(work)
         self.addTst(work)
 
 if __name__ == "__main__":
+
+    # inicializa notificacao
+    noti = notificacao(PROJ_D_NAME)
+
     ## Init ALU
     tstUla = tstUla()
 
@@ -61,11 +56,12 @@ if __name__ == "__main__":
     tstUla.work.run()
 
     print("===================================================")
+    r = report(tstUla.log, 'D', 'HW')
+
+    # notificacao / log do teste
+    noti.hw(r)
+
     print("Reporting test result to server")
-    r = report(tstUla.log, 'D')
-    error = r.hw()
     r.send()
-    sys.exit(error)
+    sys.exit(r.error)
     print("===================================================")
-
-

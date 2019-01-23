@@ -91,7 +91,73 @@ architecture  rtl OF alu IS
 	end component;
 
    SIGNAL zxout,zyout,nxout,nyout,andout,adderout,muxout,precomp: std_logic_vector(15 downto 0);
-
+	
 begin
+
+zerax: zerador16 port map (
+	  a => x,
+	  z => zx,
+	  y => zxout
+	);
+
+invertex: inversor16 port map (
+	  a => zxout,
+	  z => nx,
+	  y => nxout
+	);	
+
+	
+zeray: zerador16 port map (
+	  a => y,
+	  z => zy,
+	  y => zyout
+	);
+
+invertey: inversor16 port map (
+	  a => zyout,
+	  z => ny,
+	  y => nyout
+	);	
+
+e: And16 port map (
+	  a => nxout,
+	  b => nyout,
+	  q => andout
+	);	
+
+add:Add16 port map (
+		a => nxout,	
+		b => nyout,
+		q => adderout
+	
+);
+
+mux: Mux16 port map (
+		a => andout,
+		b => adderout,
+	   sel => f,
+		q => muxout  
+		);
+
+inverted: inversor16 port map (
+	  a => muxout,
+	  z => no,
+	  y => precomp
+	);	
+		
+
+gambs: inversor16 port map (
+     a => muxout,
+	  z => no,
+	  y => saida
+		);
+
+		
+comps: comparador16 port map (
+	  a => precomp,
+	  zr => zr,
+	  ng => ng
+	);			
+
 
 end architecture;

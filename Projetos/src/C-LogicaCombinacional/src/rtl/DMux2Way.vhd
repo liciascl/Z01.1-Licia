@@ -8,3 +8,12 @@ entity DMux2Way is
 			q0:  out STD_LOGIC;
 			q1:  out STD_LOGIC);
 end entity;
+
+
+architecture dmux2 of DMux2Way is
+
+	begin
+	 q0 <= a when (sel = '0') else '0';
+	 q1 <= a when (sel = '1') else '0';
+
+end dmux2;
